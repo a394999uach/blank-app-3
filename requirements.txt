@@ -1,5 +1,5 @@
 streamlit
-pandaS
+pandas
 altair
 plotly
 requests
