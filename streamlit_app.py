@@ -1,8 +1,6 @@
 import pandas as pd
 import streamlit as st
 import altair as alt
-import plotly.express as px
-import requests
 
 st.set_page_config(
     page_title="El agua en México: Disponibilidad y Desperdicio",
@@ -188,7 +186,7 @@ st.info(
 )
 
 # ==========================================
-# SECCIÓN: Mapa de Consumo por Estado
+# SECCIÓN: Mapa de Consumo por Estado (Altair)
 # ==========================================
 st.markdown("---")
 st.subheader("🗺️ Mapa de Consumo Total de Agua por Estado")
@@ -197,54 +195,49 @@ st.write(
     "(incluye uso agrícola, público e industrial en millones de m³)."
 )
 
-@st.cache_data
-def cargar_geojson_mexico():
-    url = "https://raw.githubusercontent.com/angelnmara/geojson/master/mexicoHigh.json"
-    response = requests.get(url)
-    return response.json()
+df_mapa = pd.DataFrame({
+    "Estado": list(datos_consumo_agua.keys()),
+    "Consumo_Mm3": list(datos_consumo_agua.values())
+})
 
-try:
-    geojson_mexico = cargar_geojson_mexico()
+url_geojson = "https://raw.githubusercontent.com/angelnmara/geojson/master/mexicoHigh.json"
+mapa_mexico = alt.Data(
+    url=url_geojson,
+    format=alt.DataFormat(property="features", type="json")
+)
 
-    df_mapa = pd.DataFrame({
-        "Estado": list(datos_consumo_agua.keys()),
-        "Consumo_Mm3": list(datos_consumo_agua.values())
-    })
+fig_mapa = alt.Chart(mapa_mexico).mark_geoshape(
+    stroke="white",
+    strokeWidth=0.8
+).encode(
+    color=alt.Color(
+        "Consumo_Mm3:Q",
+        scale=alt.Scale(scheme="blues"),
+        title="Consumo (Mm³/año)"
+    ),
+    tooltip=[
+        alt.Tooltip("properties.name:N", title="Estado"),
+        alt.Tooltip("Consumo_Mm3:Q", title="Consumo (Mm³/año)", format=",.0f")
+    ]
+).transform_lookup(
+    lookup="properties.name",
+    from_=alt.LookupData(df_mapa, "Estado", ["Consumo_Mm3"])
+).project(
+    type="mercator"
+).properties(
+    width=650,
+    height=420
+)
 
-    fig_mapa = px.choropleth(
-        df_mapa,
-        geojson=geojson_mexico,
-        locations="Estado",
-        featureidkey="properties.name",
-        color="Consumo_Mm3",
-        color_continuous_scale="YlGnBu",
-        labels={"Consumo_Mm3": "Consumo (Mm³/año)"},
-        hover_name="Estado",
-        hover_data={"Estado": False, "Consumo_Mm3": ":,.0f"}
-    )
+st.altair_chart(fig_mapa, width="stretch")
 
-    fig_mapa.update_geos(
-        fitbounds="locations",
-        visible=False
-    )
-    fig_mapa.update_layout(
-        margin={"r": 0, "t": 10, "l": 0, "b": 0},
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)"
-    )
-
-    st.plotly_chart(fig_mapa, width="stretch")
-
-    estado_max = df_mapa.loc[df_mapa["Consumo_Mm3"].idxmax()]
-    consumo_sel = datos_consumo_agua.get(estado_seleccionado, 0)
-    st.warning(
-        f"📊 **Mayor consumidor a nivel nacional:** **{estado_max['Estado']}** con aproximadamente "
-        f"**{estado_max['Consumo_Mm3']:,.0f} millones de m³ al año** (impulsado principalmente por su actividad agrícola).\n\n"
-        f"📍 **Estado seleccionado ({estado_seleccionado}):** Consume aproximadamente **{consumo_sel:,.0f} millones de m³ al año**."
-    )
-
-except Exception as e:
-    st.error(f"No se pudo cargar el mapa interactivo. Detalle: {e}")
+estado_max = df_mapa.loc[df_mapa["Consumo_Mm3"].idxmax()]
+consumo_sel = datos_consumo_agua.get(estado_seleccionado, 0)
+st.warning(
+    f"📊 **Mayor consumidor a nivel nacional:** **{estado_max['Estado']}** con aproximadamente "
+    f"**{estado_max['Consumo_Mm3']:,.0f} millones de m³ al año** (impulsado principalmente por su alta actividad agrícola).\n\n"
+    f"📍 **Estado seleccionado ({estado_seleccionado}):** Consume aproximadamente **{consumo_sel:,.0f} millones de m³ al año**."
+)
 
 st.markdown("---")
 
@@ -266,7 +259,7 @@ with col_s3:
     frecuencia_semanal = st.slider("Duchas por semana:", 1, 14, 7)
 
 with col_s4:
-    costo_botella = st.number_input("Precio por botella de 500ml ($ MXN):", value=15.0, step=1.0)
+    costo_botella = st.number_input("Precio por botella de 500ml (\$ MXN):", value=15.0, step=1.0)
 
 litros_ducha = minutos_espera * caudal_regadera
 litros_semana = litros_ducha * frecuencia_semanal
@@ -288,16 +281,16 @@ st.write("### 🫗 Impacto económico y volumen desperdiciado:")
 res_col1, res_col2, res_col3, res_col4 = st.columns(4)
 
 with res_col1:
-    st.metric("Por ducha", f"${costo_ducha:,.2f} MXN", f"{int(botellas_ducha):,} botellas")
+    st.metric("Por ducha", f"\${costo_ducha:,.2f} MXN", f"{int(botellas_ducha):,} botellas")
 
 with res_col2:
-    st.metric("Por semana", f"${costo_semana:,.2f} MXN", f"{int(botellas_semana):,} botellas")
+    st.metric("Por semana", f"\${costo_semana:,.2f} MXN", f"{int(botellas_semana):,} botellas")
 
 with res_col3:
-    st.metric("Por mes", f"${costo_mes:,.2f} MXN", f"{int(botellas_mes):,} botellas")
+    st.metric("Por mes", f"\${costo_mes:,.2f} MXN", f"{int(botellas_mes):,} botellas")
 
 with res_col4:
-    st.metric("Por año", f"${costo_anio:,.2f} MXN", f"{int(botellas_anio):,} botellas")
+    st.metric("Por año", f"\${costo_anio:,.2f} MXN", f"{int(botellas_anio):,} botellas")
 
 if botellas_anio > 0:
     df_grafica = pd.DataFrame({
@@ -313,97 +306,10 @@ if botellas_anio > 0:
             title=None,
             axis=alt.Axis(labelAngle=0)
         ),
-        y=alt.Y("Costo_MXN:Q", title="Dinero equivalente ($ MXN)"),
+        y=alt.Y("Costo_MXN:Q", title="Dinero equivalente (\$ MXN)"),
         tooltip=[
             alt.Tooltip("Periodo:N", title="Periodo"),
             alt.Tooltip("Costo_MXN:Q", title="Costo Estimado ($ MXN)", format="$,.2f"),
             alt.Tooltip("Botellas:Q", title="Botellas (500 ml)", format=",.0f")
         ]
     )
-    st.altair_chart(chart, width="stretch")
-
-st.write(
-    "⚠️ *Nota metodológica:* Cada litro equivale a 2 botellas de 500 ml. "
-    "El cálculo estimativo toma como referencia un costo promedio de $15.00 MXN por botella comercial."
-)
-
-st.subheader("4. Recomendaciones prácticas")
-st.success(
-    "**Acciones sencillas para reducir el consumo en casa:**\n\n"
-    "1. **Prepara todo antes de abrir la llave:** Ten listas tus cosas para evitar dejar la regadera abierta.\n"
-    "2. **Recolecta el agua fría inicial:** Coloca una cubeta mientras esperas a que salga el agua caliente.\n"
-    "3. **Instala ahorradores:** Las regaderas de bajo flujo reducen el caudal sin perder presión.\n"
-    "4. **Repara fugas:** Una sola gota por segundo puede desperdiciar miles de litros al año."
-)
-
-st.markdown("---")
-st.header("💡 Calculador de Ahorro en Hábitos Cotidianos")
-st.write("Descubre cuántos litros de agua y dinero puedes ahorrar al modificar pequeños hábitos en casa.")
-
-col_hab1, col_hab2 = st.columns(2)
-
-with col_hab1:
-    min_cepillado = st.number_input(
-        "Minutos con la llave abierta al lavarte los dientes (al día):",
-        min_value=0.0,
-        max_value=15.0,
-        value=3.0,
-        step=0.5
-    )
-    veces_lavado_trastes = st.number_input(
-        "Veces que lavas trastes con la llave abierta al día:",
-        min_value=0,
-        max_value=10,
-        value=2,
-        step=1
-    )
-
-with col_hab2:
-    usa_cubeta_trastes = st.checkbox("¿Usas cubeta/tarja tapada para lavar trastes?", value=False)
-    usa_vaso_dientes = st.checkbox("¿Usas vaso con agua para lavarte los dientes?", value=False)
-
-litros_dientes = 0 if usa_vaso_dientes else min_cepillado * 6
-litros_trastes = 15 if usa_cubeta_trastes else veces_lavado_trastes * 10 * 6
-
-litros_totales_dia = litros_dientes + litros_trastes
-litros_totales_mes = litros_totales_dia * 30
-
-ahorro_diario = (min_cepillado * 6) + (veces_lavado_trastes * 10 * 6) - (litros_dientes + litros_trastes)
-ahorro_mensual = ahorro_diario * 30
-
-c1, c2, c3 = st.columns(3)
-c1.metric("Consumo estimado diario", f"{litros_totales_dia:.0f} L")
-c2.metric("Consumo estimado mensual", f"{litros_totales_mes:.0f} L")
-c3.metric(
-    "Ahorro potencial mensual",
-    f"{ahorro_mensual:.0f} L",
-    delta=f"{ahorro_mensual:.0f} L Ahorrados" if ahorro_mensual > 0 else "¡Excelente hábito!"
-)
-
-if ahorro_mensual > 0:
-    st.info(
-        f"✨ **Tip de impacto:** Si adoptas el uso de vaso y tarja tapada, "
-        f"ahorrarías aproximadamente **{ahorro_mensual:.0f} litros de agua al mes**."
-    )
-else:
-    st.success("🎉 ¡Felicidades! Ya estás aplicando excelentes prácticas de ahorro de agua en tu rutina diaria.")
-
-st.subheader("5. Fuentes de información oficiales")
-st.write("Para garantizar la veracidad del proyecto, los datos e indicadores provienen de instituciones oficiales:")
-
-fuentes_texto = (
-    "- **CONAGUA (Comisión Nacional del Agua)**\n"
-    "  - *Documento:* Estadísticas del Agua en México / Atlas del Agua.\n"
-    "  - *Enlace:* [https://www.gob.mx/conagua](https://www.gob.mx/conagua)\n\n"
-    "- **Sistema de Información del Agua (CONAGUA)**\n"
-    "  - *Documento:* Monitoreo de disponibilidad y calidad del agua por regiones hidrológicas.\n"
-    "  - *Enlace:* [https://app.conagua.gob.mx/sistemasdeagua/](https://app.conagua.gob.mx/sistemasdeagua/)\n\n"
-    "- **INEGI (Instituto Nacional de Estadística y Geografía)**\n"
-    "  - *Documento:* Censos de población y estadísticas sobre servicios de agua potable.\n"
-    "  - *Enlace:* [https://www.inegi.org.mx/](https://www.inegi.org.mx/)\n\n"
-    "- **FAO (Organización de las Naciones Unidas para la Alimentación y la Agricultura)**\n"
-    "  - *Documento:* Base de datos global de recursos hídricos (AQUASTAT).\n"
-    "  - *Enlace:* [https://www.fao.org/](https://www.fao.org/)"
-)
-
-st.markdown(fuentes_texto)
