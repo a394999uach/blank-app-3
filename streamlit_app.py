@@ -2,40 +2,23 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 
-st.set_page_config(
-    page_title="El agua en México: Disponibilidad y Desperdicio",
-    layout="centered"
-)
+st.set_page_config(page_title="El agua en México: Disponibilidad y Desperdicio💧", layout="centered")
 
-st.markdown(
-    "<style>.main {background-color: #F4F8FB;} "
-    "h1 {color: #1B4965; text-align: center;} "
-    "h3 {color: #62B6CB;}</style>",
-    unsafe_allow_html=True
-)
+st.markdown("<style>.main {background-color: #F4F8FB;} h1 {color: #1B4965; text-align: center;} h3 {color: #62B6CB;}</style>", unsafe_allow_html=True)
 
 st.title("💧 El agua en México: disponibilidad, calidad y desperdicio")
-st.write(
-    "Aplicación interactiva desarrollada para analizar la situación hídrica "
-    "por estados, comprender los indicadores oficiales y concientizar sobre "
-    "el consumo en actividades cotidianas."
-)
+st.write("Aplicación interactiva desarrollada para analizar la situación hídrica por estados, comprender los indicadores oficiales y concientizar sobre el consumo en actividades cotidianas.")
 
 estados_mexico = [
-    "Aguascalientes", "Baja California", "Baja California Sur", "Campeche",
-    "Chiapas", "Chihuahua", "Ciudad de México", "Coahuila", "Colima",
-    "Durango", "Estado de México", "Guanajuato", "Guerrero", "Hidalgo",
-    "Jalisco", "Michoacán", "Morelos", "Nayarit", "Nuevo León", "Oaxaca",
-    "Puebla", "Querétaro", "Quintana Roo", "San Luis Potosí", "Sinaloa",
-    "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz", "Yucatán",
-    "Zacatecas"
+    "Aguascalientes", "Baja California", "Baja California Sur", "Campeche", "Chiapas",
+    "Chihuahua", "Ciudad de México", "Coahuila", "Colima", "Durango", "Estado de México",
+    "Guanajuato", "Guerrero", "Hidalgo", "Jalisco", "Michoacán", "Morelos", "Nayarit",
+    "Nuevo León", "Oaxaca", "Puebla", "Querétaro", "Quintana Roo", "San Luis Potosí",
+    "Sinaloa", "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz", "Yucatán", "Zacatecas"
 ]
 estados_mexico = sorted(list(set(estados_mexico)))
 
-periodos = [
-    "2006-2010", "2011-2015", "2016-2020",
-    "2021-2025", "2026-2030", "Dato más reciente disponible"
-]
+periodos = ["2006-2010", "2011-2015", "2016-2020", "2021-2025", "2026-2030", "Dato más reciente disponible"]
 
 datos_disponibilidad = {
     "Aguascalientes": {"2006-2010": 420, "2011-2015": 390, "2016-2020": 360, "2021-2025": 340, "2026-2030": "Sin datos disponibles", "Dato más reciente disponible": 340},
@@ -122,7 +105,7 @@ datos_consumo_agua = {
 }
 
 # ==========================================
-# 1. CONSULTA POR ESTADO Y PERIODO
+# SECCIÓN 1: Consulta por Estado y Periodo
 # ==========================================
 st.subheader("1. Consulta por Estado y Periodo")
 
@@ -130,21 +113,13 @@ col1, col2 = st.columns(2)
 
 with col1:
     default_index = estados_mexico.index("Chihuahua") if "Chihuahua" in estados_mexico else 0
-    estado_seleccionado = st.selectbox(
-        "Selecciona un estado de México:",
-        estados_mexico,
-        index=default_index
-    )
+    estado_seleccionado = st.selectbox("Selecciona un estado de México:", estados_mexico, index=default_index)
 
 with col2:
-    periodo_seleccionado = st.selectbox(
-        "Selecciona el periodo:",
-        periodos,
-        index=3
-    )
+    periodo_seleccionado = st.selectbox("Selecciona el periodo:", periodos, index=3)
 
 # ==========================================
-# 2. INDICADORES HÍDRICOS Y POTABILIDAD
+# SECCIÓN 2: Indicadores Hídricos y Potabilidad
 # ==========================================
 st.subheader("2. Indicadores Hídricos y Potabilidad")
 
@@ -153,53 +128,35 @@ if estado_seleccionado in datos_disponibilidad:
     if periodo_seleccionado in datos_disponibilidad[estado_seleccionado]:
         disp_valor = datos_disponibilidad[estado_seleccionado][periodo_seleccionado]
 
-info_cobertura = datos_cobertura_potable.get(
-    estado_seleccionado,
-    {"cobertura": "N/D", "potabilidad": "Sin datos"}
-)
+info_cobertura = datos_cobertura_potable.get(estado_seleccionado, {"cobertura": "N/D", "potabilidad": "Sin datos"})
 
 col_m1, col_m2, col_m3 = st.columns(3)
 
 with col_m1:
     if isinstance(disp_valor, (int, float)):
-        st.metric(
-            label=f"Disponibilidad per Cápita ({periodo_seleccionado})",
-            value=f"{disp_valor:,.0f} m³/hab/año"
-        )
+        st.metric(label=f"Disponibilidad per Cápita ({periodo_seleccionado})", value=f"{disp_valor:,.0f} m³/hab/año")
     else:
-        st.metric(
-            label=f"Disponibilidad per Cápita ({periodo_seleccionado})",
-            value=disp_valor
-        )
+        st.metric(label=f"Disponibilidad per Cápita ({periodo_seleccionado})", value=disp_valor)
 
 with col_m2:
-    st.metric(
-        label="Cobertura de Agua Entubada",
-        value=f"{info_cobertura['cobertura']}%"
-    )
+    st.metric(label="Cobertura de Agua Entubada", value=f"{info_cobertura['cobertura']}%")
 
 with col_m3:
-    st.metric(
-        label="Calidad / Potabilidad General",
-        value=info_cobertura["potabilidad"]
-    )
+    st.metric(label="Calidad / Potabilidad General", value=info_cobertura['potabilidad'])
 
 st.info(
     "💡 **¿Qué significan estos indicadores?**\n"
-    "- **Disponibilidad:** Mide el agua renovable total del estado dividida entre su población.\n"
+    "- **Disponibilidad:** Mide el agua renovable total del estado dividida entre su población (no equivale directamente a agua en la llave, ya que contempla agricultura e industria).\n"
     "- **Cobertura:** Porcentaje de hogares conectados a la red pública de agua entubada (Fuente: INEGI).\n"
-    "- **Potabilidad:** Diagnóstico regional sobre la aptitud del agua para uso doméstico."
+    "- **Potabilidad:** Diagnóstico regional sobre la aptitud del agua para uso doméstico y los retos de tratamiento local."
 )
 
 # ==========================================
-# MAPA DE CONSUMO POR ESTADO
+# MAPA DE CONSUMO POR ESTADO (ENTRE 2 Y 3)
 # ==========================================
 st.markdown("---")
 st.subheader("🗺️ Mapa de Consumo Total de Agua por Estado")
-st.write(
-    "Visualización geográfica del volumen anual de agua concesionada/consumida "
-    "(incluye uso agrícola, público e industrial en millones de m³)."
-)
+st.write("Visualización geográfica del volumen anual de agua concesionada/consumida (incluye uso agrícola, público e industrial en millones de m³).")
 
 df_mapa = pd.DataFrame({
     "Estado": list(datos_consumo_agua.keys()),
@@ -240,21 +197,17 @@ st.altair_chart(fig_mapa, use_container_width=True)
 estado_max = df_mapa.loc[df_mapa["Consumo_Mm3"].idxmax()]
 consumo_sel = datos_consumo_agua.get(estado_seleccionado, 0)
 st.warning(
-    f"📊 **Mayor consumidor a nivel nacional:** **{estado_max['Estado']}** con aproximadamente "
-    f"**{estado_max['Consumo_Mm3']:,.0f} millones de m³ al año** (impulsado principalmente por su alta actividad agrícola).\n\n"
+    f"📊 **Mayor consumidor a nivel nacional:** **{estado_max['Estado']}** con aproximadamente **{estado_max['Consumo_Mm3']:,.0f} millones de m³ al año** (impulsado principalmente por su alta actividad agrícola).\n\n"
     f"📍 **Estado seleccionado ({estado_seleccionado}):** Consume aproximadamente **{consumo_sel:,.0f} millones de m³ al año**."
 )
 
 st.markdown("---")
 
 # ==========================================
-# 3. SIMULADOR DE DESPERDICIO EN BOTELLAS
+# SECCIÓN 3: Simulador de desperdicio en botellas
 # ==========================================
 st.subheader("3. Simulador de desperdicio en botellas de agua (500 ml)")
-st.write(
-    "Calcula cuántas **botellas de 500 ml** y cuánto dinero tirarías a la basura "
-    "si compraras esa misma cantidad de agua embotellada mientras esperas a que salga la caliente en la regadera."
-)
+st.write("Calcula cuántas **botellas de 500 ml** y cuánto dinero tirarías a la basura si compraras esa misma cantidad de agua embotellada mientras esperas a que salga la caliente en la regadera.")
 
 col_s1, col_s2, col_s3, col_s4 = st.columns(4)
 
@@ -309,12 +262,7 @@ if botellas_anio > 0:
     })
 
     chart = alt.Chart(df_grafica).mark_bar(color="#62B6CB").encode(
-        x=alt.X(
-            "Periodo:N",
-            sort=["Por ducha", "Por semana", "Por mes", "Por año"],
-            title=None,
-            axis=alt.Axis(labelAngle=0)
-        ),
+        x=alt.X("Periodo:N", sort=["Por ducha", "Por semana", "Por mes", "Por año"], title=None, axis=alt.Axis(labelAngle=0)),
         y=alt.Y("Costo_MXN:Q", title="Dinero equivalente ($ MXN)"),
         tooltip=[
             alt.Tooltip("Periodo:N", title="Periodo"),
@@ -324,15 +272,10 @@ if botellas_anio > 0:
     )
     st.altair_chart(chart, use_container_width=True)
 
-st.write(
-    "⚠️ *Nota metodológica:* Cada litro equivale a 2 botellas de 500 ml. "
-    "El cálculo estimativo toma como referencia un costo promedio de $15.00 MXN por botella comercial."
-)
-
-st.markdown("---")
+st.write("⚠️ *Nota metodológica:* Cada litro equivale a 2 botellas de 500 ml. El cálculo estimativo toma como referencia un costo promedio de $15.00 MXN por botella comercial.")
 
 # ==========================================
-# 4. RECOMENDACIONES PRÁCTICAS
+# SECCIÓN 4: Recomendaciones prácticas
 # ==========================================
 st.subheader("4. Recomendaciones prácticas")
 st.success(
@@ -343,12 +286,11 @@ st.success(
     "4. **Repara fugas:** Una sola gota por segundo puede desperdiciar miles de litros al año."
 )
 
+# ==========================================
+# SECCIÓN EXTRA: Calculador de Ahorro Directo
+# ==========================================
 st.markdown("---")
-
-# ==========================================
-# 5. CALCULADOR DE AHORRO EN HÁBITOS
-# ==========================================
-st.subheader("5. Calculador de Ahorro en Hábitos Cotidianos")
+st.header("💡 Calculador de Ahorro en Hábitos Cotidianos")
 st.write("Descubre cuántos litros de agua y dinero puedes ahorrar al modificar pequeños hábitos en casa.")
 
 col_hab1, col_hab2 = st.columns(2)
@@ -385,26 +327,17 @@ ahorro_mensual = ahorro_diario * 30
 c1, c2, c3 = st.columns(3)
 c1.metric("Consumo estimado diario", f"{litros_totales_dia:.0f} L")
 c2.metric("Consumo estimado mensual", f"{litros_totales_mes:.0f} L")
-c3.metric(
-    "Ahorro potencial mensual",
-    f"{ahorro_mensual:.0f} L",
-    delta=f"{ahorro_mensual:.0f} L Ahorrados" if ahorro_mensual > 0 else "¡Excelente hábito!"
-)
+c3.metric("Ahorro potencial mensual", f"{ahorro_mensual:.0f} L", delta=f"{ahorro_mensual:.0f} L Ahorrados" if ahorro_mensual > 0 else "¡Excelente hábito!")
 
 if ahorro_mensual > 0:
-    st.info(
-        f"✨ **Tip de impacto:** Si adoptas el uso de vaso y tarja tapada, "
-        f"ahorrarías aproximadamente **{ahorro_mensual:.0f} litros de agua al mes**."
-    )
+    st.info(f"✨ **Tip de impacto:** Si adoptas el uso de vaso y tarja tapada, ahorrarías aproximadamente **{ahorro_mensual:.0f} litros de agua al mes**.")
 else:
     st.success("🎉 ¡Felicidades! Ya estás aplicando excelentes prácticas de ahorro de agua en tu rutina diaria.")
 
-st.markdown("---")
-
 # ==========================================
-# 6. FUENTES DE INFORMACIÓN OFICIALES
+# SECCIÓN 5: Fuentes de información oficiales
 # ==========================================
-st.subheader("6. Fuentes de información oficiales")
+st.subheader("5. Fuentes de información oficiales")
 st.write("Para garantizar la veracidad del proyecto, los datos e indicadores provienen de instituciones oficiales:")
 
 fuentes_texto = (
