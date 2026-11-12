@@ -121,6 +121,9 @@ datos_consumo_agua = {
     "Yucatán": 1480, "Zacatecas": 1750
 }
 
+# ==========================================
+# 1. CONSULTA POR ESTADO Y PERIODO
+# ==========================================
 st.subheader("1. Consulta por Estado y Periodo")
 
 col1, col2 = st.columns(2)
@@ -140,6 +143,9 @@ with col2:
         index=3
     )
 
+# ==========================================
+# 2. INDICADORES HÍDRICOS Y POTABILIDAD
+# ==========================================
 st.subheader("2. Indicadores Hídricos y Potabilidad")
 
 disp_valor = "Sin datos disponibles"
@@ -186,7 +192,7 @@ st.info(
 )
 
 # ==========================================
-# SECCIÓN: Mapa de Consumo por Estado (Altair)
+# MAPA DE CONSUMO POR ESTADO
 # ==========================================
 st.markdown("---")
 st.subheader("🗺️ Mapa de Consumo Total de Agua por Estado")
@@ -229,7 +235,7 @@ fig_mapa = alt.Chart(mapa_mexico).mark_geoshape(
     height=420
 )
 
-st.altair_chart(fig_mapa, width="stretch")
+st.altair_chart(fig_mapa, use_container_width=True)
 
 estado_max = df_mapa.loc[df_mapa["Consumo_Mm3"].idxmax()]
 consumo_sel = datos_consumo_agua.get(estado_seleccionado, 0)
@@ -241,6 +247,9 @@ st.warning(
 
 st.markdown("---")
 
+# ==========================================
+# 3. SIMULADOR DE DESPERDICIO EN BOTELLAS
+# ==========================================
 st.subheader("3. Simulador de desperdicio en botellas de agua (500 ml)")
 st.write(
     "Calcula cuántas **botellas de 500 ml** y cuánto dinero tirarías a la basura "
@@ -259,7 +268,7 @@ with col_s3:
     frecuencia_semanal = st.slider("Duchas por semana:", 1, 14, 7)
 
 with col_s4:
-    costo_botella = st.number_input("Precio por botella de 500ml (\$ MXN):", value=15.0, step=1.0)
+    costo_botella = st.number_input("Precio por botella de 500ml ($ MXN):", value=15.0, step=1.0)
 
 litros_ducha = minutos_espera * caudal_regadera
 litros_semana = litros_ducha * frecuencia_semanal
@@ -281,16 +290,16 @@ st.write("### 🫗 Impacto económico y volumen desperdiciado:")
 res_col1, res_col2, res_col3, res_col4 = st.columns(4)
 
 with res_col1:
-    st.metric("Por ducha", f"\${costo_ducha:,.2f} MXN", f"{int(botellas_ducha):,} botellas")
+    st.metric("Por ducha", f"${costo_ducha:,.2f} MXN", f"{int(botellas_ducha):,} botellas")
 
 with res_col2:
-    st.metric("Por semana", f"\${costo_semana:,.2f} MXN", f"{int(botellas_semana):,} botellas")
+    st.metric("Por semana", f"${costo_semana:,.2f} MXN", f"{int(botellas_semana):,} botellas")
 
 with res_col3:
-    st.metric("Por mes", f"\${costo_mes:,.2f} MXN", f"{int(botellas_mes):,} botellas")
+    st.metric("Por mes", f"${costo_mes:,.2f} MXN", f"{int(botellas_mes):,} botellas")
 
 with res_col4:
-    st.metric("Por año", f"\${costo_anio:,.2f} MXN", f"{int(botellas_anio):,} botellas")
+    st.metric("Por año", f"${costo_anio:,.2f} MXN", f"{int(botellas_anio):,} botellas")
 
 if botellas_anio > 0:
     df_grafica = pd.DataFrame({
@@ -306,10 +315,112 @@ if botellas_anio > 0:
             title=None,
             axis=alt.Axis(labelAngle=0)
         ),
-        y=alt.Y("Costo_MXN:Q", title="Dinero equivalente (\$ MXN)"),
+        y=alt.Y("Costo_MXN:Q", title="Dinero equivalente ($ MXN)"),
         tooltip=[
             alt.Tooltip("Periodo:N", title="Periodo"),
             alt.Tooltip("Costo_MXN:Q", title="Costo Estimado ($ MXN)", format="$,.2f"),
             alt.Tooltip("Botellas:Q", title="Botellas (500 ml)", format=",.0f")
         ]
     )
+    st.altair_chart(chart, use_container_width=True)
+
+st.write(
+    "⚠️ *Nota metodológica:* Cada litro equivale a 2 botellas de 500 ml. "
+    "El cálculo estimativo toma como referencia un costo promedio de $15.00 MXN por botella comercial."
+)
+
+st.markdown("---")
+
+# ==========================================
+# 4. RECOMENDACIONES PRÁCTICAS
+# ==========================================
+st.subheader("4. Recomendaciones prácticas")
+st.success(
+    "**Acciones sencillas para reducir el consumo en casa:**\n\n"
+    "1. **Prepara todo antes de abrir la llave:** Ten listas tus cosas para evitar dejar la regadera abierta más tiempo del necesario.\n"
+    "2. **Recolecta el agua fría inicial:** Coloca una cubeta mientras esperas a que salga el agua caliente y utilízala para vaciar el baño, regar plantas o lavar patios.\n"
+    "3. **Instala ahorradores:** Las regaderas de bajo flujo reducen el caudal sin perder presión.\n"
+    "4. **Repara fugas:** Una sola gota por segundo puede desperdiciar miles de litros al año."
+)
+
+st.markdown("---")
+
+# ==========================================
+# 5. CALCULADOR DE AHORRO EN HÁBITOS
+# ==========================================
+st.subheader("5. Calculador de Ahorro en Hábitos Cotidianos")
+st.write("Descubre cuántos litros de agua y dinero puedes ahorrar al modificar pequeños hábitos en casa.")
+
+col_hab1, col_hab2 = st.columns(2)
+
+with col_hab1:
+    min_cepillado = st.number_input(
+        "Minutos con la llave abierta al lavarte los dientes (al día):",
+        min_value=0.0,
+        max_value=15.0,
+        value=3.0,
+        step=0.5
+    )
+    veces_lavado_trastes = st.number_input(
+        "Veces que lavas trastes con la llave abierta al día:",
+        min_value=0,
+        max_value=10,
+        value=2,
+        step=1
+    )
+
+with col_hab2:
+    usa_cubeta_trastes = st.checkbox("¿Usas cubeta/tarja tapada para lavar trastes?", value=False)
+    usa_vaso_dientes = st.checkbox("¿Usas vaso con agua para lavarte los dientes?", value=False)
+
+litros_dientes = 0 if usa_vaso_dientes else min_cepillado * 6
+litros_trastes = 15 if usa_cubeta_trastes else veces_lavado_trastes * 10 * 6
+
+litros_totales_dia = litros_dientes + litros_trastes
+litros_totales_mes = litros_totales_dia * 30
+
+ahorro_diario = (min_cepillado * 6) + (veces_lavado_trastes * 10 * 6) - (litros_dientes + litros_trastes)
+ahorro_mensual = ahorro_diario * 30
+
+c1, c2, c3 = st.columns(3)
+c1.metric("Consumo estimado diario", f"{litros_totales_dia:.0f} L")
+c2.metric("Consumo estimado mensual", f"{litros_totales_mes:.0f} L")
+c3.metric(
+    "Ahorro potencial mensual",
+    f"{ahorro_mensual:.0f} L",
+    delta=f"{ahorro_mensual:.0f} L Ahorrados" if ahorro_mensual > 0 else "¡Excelente hábito!"
+)
+
+if ahorro_mensual > 0:
+    st.info(
+        f"✨ **Tip de impacto:** Si adoptas el uso de vaso y tarja tapada, "
+        f"ahorrarías aproximadamente **{ahorro_mensual:.0f} litros de agua al mes**."
+    )
+else:
+    st.success("🎉 ¡Felicidades! Ya estás aplicando excelentes prácticas de ahorro de agua en tu rutina diaria.")
+
+st.markdown("---")
+
+# ==========================================
+# 6. FUENTES DE INFORMACIÓN OFICIALES
+# ==========================================
+st.subheader("6. Fuentes de información oficiales")
+st.write("Para garantizar la veracidad del proyecto, los datos e indicadores provienen de instituciones oficiales:")
+
+fuentes_texto = (
+    "- **CONAGUA (Comisión Nacional del Agua)**\n"
+    "  - *Documento:* Estadísticas del Agua en México / Atlas del Agua.\n"
+    "  - *Institución:* Secretaría de Medio Ambiente y Recursos Naturales (SEMARNAT).\n"
+    "  - *Enlace:* [https://www.gob.mx/conagua](https://www.gob.mx/conagua)\n\n"
+    "- **Sistema de Información del Agua (CONAGUA)**\n"
+    "  - *Documento:* Monitoreo de disponibilidad y calidad del agua por regiones hidrológicas.\n"
+    "  - *Enlace:* [https://app.conagua.gob.mx/sistemasdeagua/](https://app.conagua.gob.mx/sistemasdeagua/)\n\n"
+    "- **INEGI (Instituto Nacional de Estadística y Geografía)**\n"
+    "  - *Documento:* Censos de población y estadísticas sobre servicios de agua potable y saneamiento.\n"
+    "  - *Enlace:* [https://www.inegi.org.mx/](https://www.inegi.org.mx/)\n\n"
+    "- **FAO (Organización de las Naciones Unidas para la Alimentación y la Agricultura)**\n"
+    "  - *Documento:* Base de datos global de recursos hídricos (AQUASTAT).\n"
+    "  - *Enlace:* [https://www.fao.org/](https://www.fao.org/)"
+)
+
+st.markdown(fuentes_texto)
